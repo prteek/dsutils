@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import awswrangler as wr
+import pandas as pd
+from sys import exit, stdout, stderr, exit
+import boto3
+import argparse
+import hashlib
+import os
+import pandas as pd
+
+boto3_session = boto3.Session(region_name="eu-west-1")
+
+def conditional_cache_query(QUERY, reuse):
+    data_dir = "/tmp"
+    h = hashlib.new('sha256')
+    h.update(QUERY.encode())
+    query_hash = h.hexdigest()
+    file_path = os.path.join(data_dir, f"{query_hash}.csv")
+    if reuse and os.path.isfile(file_path):
+        df = pd.read_csv(file_path)
+    else:
+        df = wr.athena.read_sql_query(QUERY, database="default", boto3_session=boto3_session)
+        df.to_csv(file_path, index=False)
+    return df
+
+
+def read_query_from_file(query_file):
+    with open(query_file, 'r') as file:
+        QUERY = file.read()
+    return QUERY
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-q", "--query", help="SQL Query to run")
+    parser.add_argument("-r", "--reuse", help="Flag to reuse query results from previous run", action='store_true')
+    args = parser.parse_args()
+
+    if args.query is None:
+        print("No input query provided. Please specify an input query using --query.")
+        exit(1)
+
+    QUERY = args.query
+    reuse = args.reuse
+    try:
+        if os.path.isfile(QUERY): QUERY = read_query_from_file(QUERY)
+        df = conditional_cache_query(QUERY, reuse)
+        df.to_csv(stdout, index=False)
+
+    except (IOError, KeyboardInterrupt, BrokenPipeError):
+        stderr.close()
+
+if __name__ == "__main__":
+    exit(main())
