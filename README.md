@@ -16,3 +16,8 @@ chmod -R +x ~/dsutils
 ```shell
 export PATH="$PATH:/Users/YOURNAME/dsutils"
 ```
+
+Additionally to setup your cli with more tools use *dscli_setup.make*
+```shell
+make -f dscli_setup.make all
+```
