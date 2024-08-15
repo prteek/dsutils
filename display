@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 # display: Save plot to a temp location and display it in VSCode (modify for any other application)
 # Usage: rush plot -x x -y y -g points file.csv | display
-local filepath="/tmp/plot.png"
-cat >| "$filepath"
-code "$filepath"
+
+#!/bin/bash
+
+# Check if data is piped
+if [ -p /dev/stdin ]; then
+  # Read piped data and save it to /tmp/plot.png
+  cat > /tmp/plot.png
+  # Open the PNG file in VSCode
+  code /tmp/plot.png
+elif [ $# -eq 1 ]; then
+  # Check if exactly one argument is provided
+  FILEPATH=$1
+  if [ -f "$FILEPATH" ]; then
+    # Open the specified file in VSCode
+    code "$FILEPATH"
+  else
+    echo "File does not exist: $FILEPATH"
+    exit 1
+  fi
+else
+  echo "Usage: $0 [filepath]"
+  echo "       cat data | $0"
+  exit 1
+fi
