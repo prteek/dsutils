@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# display: Save plot to a temp location and display it in VSCode (modify for any other application)
+# Usage: rush plot -x x -y y -g points file.csv | display
+local filepath="/tmp/plot.png"
+cat >| "$filepath"
+code "$filepath"
