@@ -1,9 +1,9 @@
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: all rush csvkit
+.PHONY: all rush csvkit pyrun_dep
 
-all: rush csvkit
+all: rush csvkit pyrun_dep
 
 # Install rush (R one liner commandline utility) using rip from dsutils
 rush:
@@ -13,4 +13,8 @@ rush:
 
 # Install csvkit
 csvkit:
-	pip install -U csvkit
+	pip install csvkit
+
+# Install pyrun dependencies
+pyrun_dep:
+	pip install numpy scipy pandas matplotlib plotnine statsmodels
