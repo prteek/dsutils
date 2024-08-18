@@ -7,9 +7,13 @@ import importlib
 def main():
     # Setup argument parser
     parser = argparse.ArgumentParser(description="Execute python 1 liners with piped data available as df")
-    parser.add_argument('operation', type=str, help="The operation to perform on the DataFrame")
-    parser.add_argument('-l', '--libraries', nargs='+', help="""Key-Value pairs of additional libraries to load with their namespaces, e.g. pyrun -l numpy np pandas pd""")
+    parser.add_argument('operation', type=str, help="""The operation to perform on the DataFrame.
+    Recommended to specify this argument before all others""")
     parser.add_argument('-t', '--output-code', action='store_true', help="Output the script code that will be executed")
+    parser.add_argument('-l', '--libraries', nargs='+', help="""Key-Value pairs of additional libraries to load with their namespaces,
+    e.g. pyrun -l numpy np pandas pd.
+    Note: It's best to specify this argument after all others to avoid confusion in argument parsing
+    """)
     args = parser.parse_args()
 
     # Check if operation is defined
