@@ -63,11 +63,11 @@ if isinstance(result, pd.DataFrame):
     result.to_csv(sys.stdout, index=False)
 elif isinstance(result, ggplot):
     # Save the plot to a buffer
+    fig = result.draw()
     buffer = io.BytesIO()
-    result.save(buffer, format='png')
+    fig.savefig(buffer, format='png')
     buffer.seek(0)
     sys.stdout.buffer.write(buffer.getvalue())
-    buffer.close()
 elif (isinstance(result, list) and all(isinstance(item, mpl.artist.Artist) for item in result)) or (isinstance(result, mpl.artist.Artist)):
     # If the result is a list of Matplotlib artists, save the current figure
     fig = plt.gcf()  # Get the current figure
