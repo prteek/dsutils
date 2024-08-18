@@ -7,7 +7,7 @@ import importlib
 def main():
     # Setup argument parser
     parser = argparse.ArgumentParser(description="Execute python 1 liners with piped data available as df")
-    parser.add_argument('operation', help="The operation to perform on the DataFrame")
+    parser.add_argument('operation', type=str, help="The operation to perform on the DataFrame")
     parser.add_argument('-l', '--libraries', nargs='+', help="""Key-Value pairs of additional libraries to load with their namespaces, e.g. pyrun -l numpy np pandas pd""")
     parser.add_argument('-t', '--output-code', action='store_true', help="Output the script code that will be executed")
     args = parser.parse_args()
@@ -16,6 +16,8 @@ def main():
     if len(args.operation) is None:
         print("Error: No operation string provided", file=sys.stderr)
         sys.exit(1)
+    else: #  In case of multiline assemble them in single line for eval
+        operation = args.operation.replace("\n", " ")
 
     # Generate the dynamic script code
     script_code = """
@@ -56,10 +58,12 @@ def main():
 if not sys.stdin.isatty(): df = pd.read_csv(sys.stdin)
 
 # Execute the operation string
-result = eval('''{args.operation}''')
+result = eval('''{operation}''')
 
 # Check if the result is a DataFrame
-if isinstance(result, pd.DataFrame):
+if result is None:
+    pass
+elif isinstance(result, pd.DataFrame):
     result.to_csv(sys.stdout, index=False)
 elif isinstance(result, ggplot):
     # Save the plot to a buffer
@@ -77,7 +81,7 @@ elif (isinstance(result, list) and all(isinstance(item, mpl.artist.Artist) for i
     sys.stdout.buffer.write(buffer.getvalue())
 else:
     # If it's not a DataFrame, print the result directly
-    print(result)
+    print(result, file=sys.stdout)
 
 """
 
