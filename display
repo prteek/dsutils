@@ -7,9 +7,10 @@
 # Check if data is piped
 if [ -p /dev/stdin ]; then
   # Read piped data and save it to /tmp/plot.png
-  cat > /tmp/plot.png
+  random_number=$((RANDOM % 100 + 1))
+  cat > /tmp/$random_number.png
   # Open the PNG file in VSCode
-  code /tmp/plot.png
+  code /tmp/$random_number.png
 elif [ $# -eq 1 ]; then
   # Check if exactly one argument is provided
   FILEPATH=$1
