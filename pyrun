@@ -1,45 +1,98 @@
 #!/usr/bin/env python3
 
 import sys
-import pandas as pd
-import numpy as np
-from scipy import stats
-import statsmodels.api as sm
-from plotnine import *
-import io
+import argparse
+import importlib
 
 def main():
-    # Read CSV data from stdin
-    df = pd.read_csv(sys.stdin)
+    # Setup argument parser
+    parser = argparse.ArgumentParser(description="Execute python 1 liners with piped data available as df")
+    parser.add_argument('operation', help="The operation to perform on the DataFrame")
+    parser.add_argument('-l', '--libraries', nargs='+', help="""Key-Value pairs of additional libraries to load with their namespaces, e.g. pyrun -l numpy np pandas pd""")
+    parser.add_argument('-t', '--output-code', action='store_true', help="Output the script code that will be executed")
+    args = parser.parse_args()
 
-    # Get the operation string from command-line arguments
-    if len(sys.argv) < 2:
+    # Check if operation is defined
+    if len(args.operation) is None:
         print("Error: No operation string provided", file=sys.stderr)
         sys.exit(1)
 
-    operation = sys.argv[1]
+    # Generate the dynamic script code
+    script_code = """
+#!/usr/bin/env python3
+"""
+    libraries = {'sys': 'sys',
+                'io':'io',
+                'pandas':'pd',
+                'numpy':'np',
+                'scipy.stats':'stats',
+                'matplotlib':'mpl',
+                'matplotlib.pyplot':'plt',
+                'plotnine':'*'
+                }
 
+    if args.libraries:
+        it = iter(args.libraries)
+        additional_libraries = dict(zip(it, it))
+        libraries = {**libraries, **additional_libraries}
+
+    for lib, alias in libraries.items():
+        try:
+            if lib=='plotnine': # import * from plotnine
+                script_code += f"from {lib} import {alias}\n"
+                module = importlib.import_module(lib)
+                for attr_name in dir(module):
+                    if not attr_name.startswith("_"):  # Ignore private attributes
+                        globals()[attr_name] = getattr(module, attr_name)
+            else:
+                script_code += f"import {lib} as {alias}\n"
+                globals()[alias] = importlib.import_module(lib)
+
+        except ImportError as e:
+            print(f"Error loading library {lib}: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    script_code += f"""
+if not sys.stdin.isatty(): df = pd.read_csv(sys.stdin)
+
+# Execute the operation string
+result = eval('''{args.operation}''')
+
+# Check if the result is a DataFrame
+if isinstance(result, pd.DataFrame):
+    result.to_csv(sys.stdout, index=False)
+elif isinstance(result, ggplot):
+    # Save the plot to a buffer
+    buffer = io.BytesIO()
+    result.save(buffer, format='png')
+    buffer.seek(0)
+    sys.stdout.buffer.write(buffer.getvalue())
+    buffer.close()
+elif (isinstance(result, list) and all(isinstance(item, mpl.artist.Artist) for item in result)) or (isinstance(result, mpl.artist.Artist)):
+    # If the result is a list of Matplotlib artists, save the current figure
+    fig = plt.gcf()  # Get the current figure
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    sys.stdout.buffer.write(buffer.getvalue())
+else:
+    # If it's not a DataFrame, print the result directly
+    print(result)
+
+"""
+
+    # Output the script code if -t flag is provided
+    if args.output_code:
+        print(script_code)
+        sys.exit(0)
+
+    # Execute the operation script
     try:
-        # Execute the operation string
-        result = eval(operation)
-
-        # Check if the result is a DataFrame
-        if isinstance(result, pd.DataFrame):
-            result.to_csv(sys.stdout, index=False)
-        elif isinstance(result, ggplot):
-            # Save the plot to a buffer
-            buffer = io.BytesIO()
-            result.save(buffer, format='png')
-            buffer.seek(0)
-            sys.stdout.buffer.write(buffer.getvalue())
-            buffer.close()
-        else:
-            # If it's not a DataFrame, print the result directly
-            print(result)
-
+        exec(script_code)
     except Exception as e:
         print(f"Error during operation: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
