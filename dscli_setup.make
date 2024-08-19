@@ -3,7 +3,7 @@
 
 .PHONY: all rush csvkit pyrun_dep
 
-all: rush csvkit pyrun_dep
+all: csvkit pyrun_dep
 
 # Install rush (R one liner commandline utility) using rip from dsutils
 rush:
