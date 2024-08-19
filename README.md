@@ -25,3 +25,11 @@ As **rush** is a critical component of ds workflow, to use it add the following 
 ```shell
 export PATH="$PATH:/usr/local/bin/"
 ```
+
+For use with Dockerfile
+```Dockerfile
+RUN git clone https://github.com/prteek/dsutils.git /opt/program/dsutils
+ENV PATH="${PATH}:/opt/program/dsutils"
+RUN chmod -R +x /opt/program/dsutils
+RUN make -f /opt/program/dsutils/dscli_setup.make
+```
