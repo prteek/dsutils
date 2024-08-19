@@ -1,5 +1,4 @@
 .ONESHELL:
-.SHELLFLAGS := -eu -o pipefail -c
 
 .PHONY: all rush csvkit pyrun_dep
 
