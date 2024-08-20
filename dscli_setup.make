@@ -1,8 +1,8 @@
 .ONESHELL:
 
-.PHONY: all csvkit pyrun_dep
+.PHONY: all csvkit pyrun_dep rush
 
-all: csvkit pyrun_dep rush
+all: csvkit pyrun_dep
 
 # Install rush (R one liner commandline utility) using rip from dsutils
 rush:
