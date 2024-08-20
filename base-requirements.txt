@@ -1,0 +1,12 @@
+csvkit
+# pyrun
+numpy
+scipy
+pandas
+matplotlib
+plotnine
+statsmodels
+
+# a2csv, csv2a
+awswrangler
+boto3
