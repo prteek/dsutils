@@ -1,16 +1,25 @@
-#!/usr/bin/env bash
-#
-# body: apply expression to all but the first line.
-# Use multiple times in case the header spans more than one line.
-#
-# Example usage:
-# $ seq 10 | header -a 'values' | body sort -nr
-# $ seq 10 | header -a 'multi\nline\nheader' | body body body sort -nr
-# $ printf "first_name\njim\nbob\nmary\n" | body ruby -nle 'puts $_.capitalize'
-#
-# From: https://unix.stackexchange.com/a/11859
-#
-# See also: header (https://github.com/jeroenjanssens/dsutils)
-IFS= read -r header
-printf '%s\n' "$header"
-"$@"
+#!/usr/bin/env python3
+
+import sys
+import subprocess
+
+def main():
+    # Read and print the first line (header)
+    header = sys.stdin.readline().rstrip()
+    print(header)
+
+    # Apply the given command to the rest of the input
+    if len(sys.argv) > 1:
+        # Prepare the command to run
+        command = sys.argv[1:]
+        # Run the command with the rest of the stdin
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, text=True)
+
+        for line in sys.stdin:
+            process.stdin.write(line)
+
+        process.stdin.close()
+        process.wait()
+
+if __name__ == "__main__":
+    main()

@@ -1,34 +1,89 @@
-#!/usr/bin/env bash
-# cols: apply a command to a subset of the columns and merge back with the remaining columns.
-#
-# Assumes that the input data is comma-delimited and that it has a header.
-# Depends on csvcut, which is part of csvkit: http://csvkit.readthedocs.org
-# 
-# Example usage 1: reverse sort column 'a'
-# $ echo 'a,b\n1,2\n3,4\n5,6' | cols -c a body sort -nr
-#
-# Example usage 2: apply PCA (using tapkee) to all numerical features (-C selects all but the specified columns) of the Iris data set:
-# $ < iris.csv cols -C species body tapkee --method pca | header -r x,y,species
-# 
-# See also: header and body (https://github.com/jeroenjanssens/command-line-tools-for-data-science)
-#
-# Author: http://jeroenjanssens.com
+#!/usr/bin/env python3
 
-ARG="$1"
-ARG_INV="$(tr cC Cc <<< ${ARG})"
-shift
-COLUMNS="$1"
-shift
-EXPR="$@"
+import sys
+import os
+import argparse
+import subprocess
+import tempfile
 
-finish() {
-	rm -f $OTHER_COLUMNS
-}
-trap finish EXIT
+def parse_arguments():
+    """
+    Parses command-line arguments.
 
-if [ -z "$TMPDIR" ]; then
-    TMPDIR=/tmp
-fi
-OTHER_COLUMNS=$(mktemp ${TMPDIR}/cols-XXXXXXXX)
+    Returns:
+        args (argparse.Namespace): Parsed command-line arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Apply a command to a subset of columns in a CSV file and merge back with the remaining columns."
+    )
+    parser.add_argument(
+        '-c', '-C', required=True, dest='column_selector',
+        help="Specify columns to include (-c) or exclude (-C)."
+    )
+    parser.add_argument(
+        'command', nargs=argparse.REMAINDER,
+        help="Command to apply to the selected columns."
+    )
+    return parser.parse_args()
 
-tee $OTHER_COLUMNS | csvcut $ARG "$COLUMNS" | eval ${EXPR} | paste -d, - <(csvcut ${ARG_INV} "$COLUMNS" $OTHER_COLUMNS)
+def main():
+    """
+    Main function to apply a command to specified columns of a CSV file
+    and merge the result back with the remaining columns.
+    """
+    args = parse_arguments()
+
+    column_selector = args.column_selector
+    command = args.command
+
+    # Determine whether to include or exclude the columns
+    if column_selector.startswith('c'):
+        include = True
+        columns = column_selector[1:]
+    elif column_selector.startswith('C'):
+        include = False
+        columns = column_selector[1:]
+    else:
+        raise ValueError("Column selector must start with 'c' or 'C'.")
+
+    # Create a temporary file to hold other columns
+    with tempfile.NamedTemporaryFile(delete=False) as other_columns_file:
+        other_columns_file_name = other_columns_file.name
+
+    # Ensure temporary file is deleted on exit
+    def finish():
+        try:
+            os.remove(other_columns_file_name)
+        except OSError:
+            pass
+    import atexit
+    atexit.register(finish)
+
+    # Extract the specified columns
+    csvcut_command = ['csvcut']
+    if include:
+        csvcut_command += ['-c', columns]
+    else:
+        csvcut_command += ['-C', columns]
+
+    # Run csvcut and the external command on the selected columns
+    with open(other_columns_file_name, 'w') as other_columns_file:
+        process1 = subprocess.Popen(csvcut_command, stdin=sys.stdin, stdout=subprocess.PIPE, text=True)
+        process2 = subprocess.Popen(command, stdin=process1.stdout, stdout=subprocess.PIPE, text=True)
+        processed_columns, _ = process2.communicate()
+        other_columns_file.write(processed_columns)
+
+    # Merge the processed columns back with the remaining columns
+    csvcut_command_inv = ['csvcut']
+    if include:
+        csvcut_command_inv += ['-C', columns]
+    else:
+        csvcut_command_inv += ['-c', columns]
+
+    process3 = subprocess.Popen(csvcut_command_inv, stdin=sys.stdin, stdout=subprocess.PIPE, text=True)
+    process4 = subprocess.Popen(['paste', '-d,', '-', other_columns_file_name], stdin=process3.stdout, stdout=sys.stdout, text=True)
+    process3.stdout.close()
+    process4.communicate()
+
+if __name__ == "__main__":
+    main()
