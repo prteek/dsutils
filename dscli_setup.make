@@ -1,6 +1,6 @@
 .ONESHELL:
 
-.PHONY: all rush csvkit pyrun_dep
+.PHONY: all csvkit pyrun_dep
 
 all: csvkit pyrun_dep rush
 
