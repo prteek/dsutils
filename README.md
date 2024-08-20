@@ -21,10 +21,6 @@ Additionally to setup your cli with more tools use *dscli_setup.make*
 ```shell
 make -f dscli_setup.make all
 ```
-As **rush** is a critical component of ds workflow, to use it add the following to path (preferably in .zshrc or .bashrc)
-```shell
-export PATH="$PATH:/usr/local/bin/"
-```
 
 For use with Dockerfile
 ```Dockerfile
@@ -32,4 +28,10 @@ RUN git clone https://github.com/prteek/dsutils.git /opt/program/dsutils
 ENV PATH="${PATH}:/opt/program/dsutils"
 RUN chmod -R +x /opt/program/dsutils
 RUN make -f /opt/program/dsutils/dscli_setup.make
+```
+
+Optionally install **rush** a one line utility for R (prerequisite R is installed). To use it add *rush* executable to path (preferably in .zshrc or .bashrc)
+```shell
+make -f dscli_setup.make rush
+export PATH="$PATH:/usr/local/bin/"
 ```
