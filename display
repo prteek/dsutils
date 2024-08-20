@@ -1,28 +1,41 @@
-#!/usr/bin/env bash
-# display: Save plot to a temp location and display it in VSCode (modify for any other application)
-# Usage: rush plot -x x -y y -g points file.csv | display
+#!/usr/bin/env python3
 
-#!/bin/bash
+import sys
+import os
+import random
+import argparse
+import subprocess
 
-# Check if data is piped
-if [ -p /dev/stdin ]; then
-  # Read piped data and save it to /tmp/plot.png
-  random_number=$((RANDOM % 100 + 1))
-  cat > /tmp/$random_number.png
-  # Open the PNG file in VSCode
-  code /tmp/$random_number.png
-elif [ $# -eq 1 ]; then
-  # Check if exactly one argument is provided
-  FILEPATH=$1
-  if [ -f "$FILEPATH" ]; then
-    # Open the specified file in VSCode
-    code "$FILEPATH"
-  else
-    echo "File does not exist: $FILEPATH"
-    exit 1
-  fi
-else
-  echo "Usage: $0 [filepath]"
-  echo "       cat data | $0"
-  exit 1
-fi
+def main():
+    parser = argparse.ArgumentParser(description="Save plot to a temp location and display it in VSCode.")
+    parser.add_argument('-l', '--label', type=str, help="Label to use for the file name (instead of a random number).")
+    parser.add_argument('filepath', nargs='?', help="Optional file path to open in VSCode.")
+
+    args = parser.parse_args()
+
+    # Check if data is being piped into the script
+    if not sys.stdin.isatty():
+        label = args.label if args.label else str(random.randint(1, 100))
+        temp_filename = f"/tmp/{label}.png"
+
+        # Read from stdin and write to a temporary file
+        with open(temp_filename, 'wb') as f:
+            f.write(sys.stdin.buffer.read())
+
+        # Open the file in VSCode
+        subprocess.run(["code", temp_filename])
+
+    elif args.filepath:
+        # Check if the file exists and open it
+        if os.path.isfile(args.filepath):
+            subprocess.run(["code", args.filepath])
+        else:
+            print(f"File does not exist: {args.filepath}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print("Usage: display_plot.py [-l label] [filepath]")
+        print("       cat data | display_plot.py [-l label]")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
