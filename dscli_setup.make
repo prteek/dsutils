@@ -2,11 +2,18 @@
 
 .PHONY: all pydep rush
 
-all: pydep
+all: pyrun_dep a2csv_dep csvkit
 
-# Install python dependencies
-pydep:
-	pip install -r base-requirements.txt
+# Install python dependencies specified this way so that can be installed from any project that calls this Makefile
+csvkit:
+	pip install csvkit
+
+pyrun_dep:
+	pip install numpy scipy pandas matplotlib plotnine statsmodels
+
+a2csv_dep:
+	pip install boto3 awswrangler
+
 
 # Install rush (R one liner commandline utility) using rip from dsutils
 rush:
