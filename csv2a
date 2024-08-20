@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+import awswrangler as wr
+import pandas as pd
+import sys
+import boto3
+import argparse
+
+boto3_session = boto3.Session(region_name="eu-west-1")
+
+def main(df, path, database, table, mode, partition_cols, dtype):
+    return wr.s3.to_csv(df,
+                        path=path,
+                        database=database,
+                        table=table,
+                        mode=mode,
+                        partition_cols=partition_cols,
+                        dtype=dtype,
+                        dataset=True,
+                        index=False,
+                        boto3_session=boto3_session)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Write csv data to s3 and create an Athena table")
+    parser.add_argument('data', nargs='?', default=None,
+                            help='csv data, either a file_path or data passed via piping')
+    parser.add_argument('--path', '-p', help='Amazon S3 path (e.g. s3://bucket/prefix)')
+    parser.add_argument('--database', '-d', help='Glue/Athena catalog: Database name')
+    parser.add_argument('--table', '-t', help='Glue/Athena catalog: Table name')
+    parser.add_argument('--mode', '-m', default='append',
+                            help='One of: append (Default), overwrite, overwrite_partitions')
+    parser.add_argument('--partition_cols', '-pc', type=str, default=None, nargs='+',
+                            help='List of column names that will be used to create partitions (e.g. -pc col1 col2)')
+
+    parser.add_argument('--dtype', type=str, nargs='+', default=None,
+                            help='Dictionary of columns names and Athena/Glue types to be casted (e.g. --dtype col1 bigint col2 date)')
+
+    args = parser.parse_args()
+    if args.data is None:
+        if sys.stdin.isatty(): raise ValueError('Data is required')
+        else: args.data = sys.stdin
+
+    if args.dtype:
+        it = iter(args.dtype)
+        args.dtype = dict(zip(it, it))
+
+    #%%
+    df = pd.read_csv(args.data)
+    res = main(df, args.path, args.database, args.table, args.mode, args.partition_cols, args.dtype)
+    print(res, file=sys.stdout)
