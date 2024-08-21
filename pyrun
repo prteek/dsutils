@@ -14,6 +14,7 @@ def main():
     e.g. pyrun -l numpy np pandas pd.
     Note: It's best to specify this argument after all others to avoid confusion in argument parsing
     """)
+    parser.add_argument('-s', '--sep', default=',', help="Separator for the file piped in")
     args = parser.parse_args()
 
     # Check if operation is defined
@@ -60,7 +61,7 @@ def main():
             sys.exit(1)
 
     script_code += f"""
-if not sys.stdin.isatty(): df = pd.read_csv(sys.stdin)
+if not sys.stdin.isatty(): df = pd.read_csv(sys.stdin, sep="{args.sep}")
 
 # Execute the operation string
 result = eval('''{operation}''')
@@ -69,7 +70,7 @@ result = eval('''{operation}''')
 if result is None:
     pass
 elif isinstance(result, pd.DataFrame):
-    result.to_csv(sys.stdout, index=False)
+    result.to_csv(sys.stdout, sep="{args.sep}", index=False)
 elif isinstance(result, ggplot):
     # Save the plot to a buffer
     fig = result.draw()
