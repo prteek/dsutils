@@ -2,9 +2,9 @@
 
 .PHONY: all pydep rush
 
-all: pyrun_dep a2csv_dep csvkit
+all: pyrun_dep a2csv_dep shp2csv_dep csvkit
 
-# Install python dependencies specified this way so that can be installed from any project that calls this Makefile
+# Install python dependencies specified this way so that they can be installed from any project that calls this Makefile
 csvkit:
 	pip install csvkit
 
@@ -13,6 +13,9 @@ pyrun_dep:
 
 a2csv_dep:
 	pip install boto3 awswrangler
+
+shp2csv_dep:
+	pip install geopandas
 
 
 # Install rush (R one liner commandline utility) using rip from dsutils
