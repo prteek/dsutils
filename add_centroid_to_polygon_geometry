@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+#%%
+import os
+import sys
+import pandas as pd
+import geopandas as gpd
+from shapely import wkt
+import argparse
+
+#%%
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Add centroid to data using input column (geometry type)')
+    parser.add_argument('data',  help='csv data, either a file_path or data passed via piping')
+    parser.add_argument('--col', '-c', default='geometry',  help='Column to use for calculating centroid')
+    parser.add_argument('--delimiter', '-d', default=',', help='Delimiter used in input file (also used to write back results)')
+
+    args = parser.parse_args()
+    if args.data == '-':
+        args.data = sys.stdin
+
+    #%%
+    df = (pd
+            .read_csv(args.data, sep=args.delimiter)
+            .assign(polygon=lambda x: x[args.col].apply(wkt.loads))
+        )
+    gdf = gpd.GeoDataFrame(df, geometry="polygon")
+    gdf['centroid'] = gdf["polygon"].centroid.to_wkt()
+
+    gdf.drop("polygon", axis=1).to_csv(sys.stdout, sep=args.delimiter, index=False)
+
+    #%%
