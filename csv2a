@@ -8,9 +8,10 @@ import argparse
 
 boto3_session = boto3.Session(region_name="eu-west-1")
 
-def main(df, path, database, table, mode, partition_cols, dtype):
+def main(df, path, database, table, mode, partition_cols, dtype, delimiter):
     return wr.s3.to_csv(df,
                         path=path,
+                        sep=delimiter,
                         database=database,
                         table=table,
                         mode=mode,
@@ -34,6 +35,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--dtype', type=str, nargs='+', default=None,
                             help='Dictionary of columns names and Athena/Glue types to be casted (e.g. --dtype col1 bigint col2 date)')
+    parser.add_argument('--delimiter', '-d',  type=str, default=',',
+                            help="Delimiter for piped in file (Must be single character string (Athena compatibility) so '\t' is not allowed)")
 
     args = parser.parse_args()
     if args.data is None:
@@ -45,6 +48,6 @@ if __name__ == '__main__':
         args.dtype = dict(zip(it, it))
 
     #%%
-    df = pd.read_csv(args.data)
-    res = main(df, args.path, args.database, args.table, args.mode, args.partition_cols, args.dtype)
+    df = pd.read_csv(args.data, sep=args.delimiter)
+    res = main(df, args.path, args.database, args.table, args.mode, args.partition_cols, args.dtype, args.delimiter)
     print(res, file=sys.stdout)
