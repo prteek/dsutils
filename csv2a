@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('data', nargs='?', default=None,
                             help='csv data, either a file_path or data passed via piping')
     parser.add_argument('--path', '-p', help='Amazon S3 path (e.g. s3://bucket/prefix)')
-    parser.add_argument('--database', '-d', help='Glue/Athena catalog: Database name')
+    parser.add_argument('--database', '-db', help='Glue/Athena catalog: Database name')
     parser.add_argument('--table', '-t', help='Glue/Athena catalog: Table name')
     parser.add_argument('--mode', '-m', default='append',
                             help='One of: append (Default), overwrite, overwrite_partitions')
