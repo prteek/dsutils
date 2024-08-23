@@ -36,7 +36,7 @@ if __name__ == '__main__':
     for keys, group in grouped:
         # Create a unique filepath based on the group keys
         filepath = f"{'_'.join(map(str, keys))}.csv"
-        print(f"Writing {os.path.join(args.output_dir, filepath)}", file=sys.stderr)
+        print(f"Saving {os.path.join(args.output_dir, filepath)}", file=sys.stderr)
         group.to_csv(os.path.join(args.output_dir, filepath), index=False, sep=args.delimiter)
 
 
