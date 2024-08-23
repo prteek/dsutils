@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+#%%
+import os
+import sys
+import pandas as pd
+import argparse
+
+def check_if_column_is_discrete(df, col, threshold=100000):
+    # Get the number of unique values in the column
+    unique_values = df[col].nunique()
+
+    # Check if the number of unique values exceeds the threshold
+    assert unique_values <= threshold, f'Too many distinct values in column {col}'
+
+
+#%%
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Facet data based on given columns and save as separate files. e.g. based divide the file based on distinct values in property_type and bedroom_count columns')
+    parser.add_argument('data',  help='csv data, either a file_path or data passed via piping')
+    parser.add_argument('--delimiter', '-d', default=',', help='Delimiter used in input file (also used to write back results)')
+    parser.add_argument('--cols', '-c', nargs='+', help='Columns to be used for faceting')
+    parser.add_argument('--output-dir', '-od', help='Output directory')
+    parser.add_argument('--threshold', '-t', default=100000, type=int, help='Output directory')
+
+    args = parser.parse_args()
+    if args.data == '-':
+        args.data = sys.stdin
+
+    #%%
+    df = pd.read_csv(args.data, sep=args.delimiter)
+
+    _ = list(map(lambda col: check_if_column_is_discrete(df, col, ), args.cols))
+
+    grouped = df.groupby(args.cols)
+    for keys, group in grouped:
+        # Create a unique filepath based on the group keys
+        filepath = f"{'_'.join(map(str, keys))}.csv"
+        print(f"Writing {os.path.join(args.output_dir, filepath)}", file=sys.stderr)
+        group.to_csv(os.path.join(args.output_dir, filepath), index=False, sep=args.delimiter)
+
+
+    #%%
