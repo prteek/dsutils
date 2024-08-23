@@ -35,9 +35,9 @@ if __name__ == '__main__':
     grouped = df.groupby(args.cols)
     for keys, group in grouped:
         # Create a unique filepath based on the group keys
-        filepath = f"{'_'.join(map(str, keys))}.csv"
-        print(f"Saving {os.path.join(args.output_dir, filepath)}", file=sys.stderr)
-        group.to_csv(os.path.join(args.output_dir, filepath), index=False, sep=args.delimiter)
+        filepath = os.path.join(args.output_dir, f"{'_'.join(map(str, keys))}.csv")
+        print(f"Saving {filepath}", file=sys.stderr)
+        group.to_csv(filepath, index=False, sep=args.delimiter)
 
 
     #%%
