@@ -120,10 +120,11 @@ def parse_input_file(input_file: str) -> List[str]:
         return [line.strip() for line in file.readlines()]
 
 def main():
-    parser = argparse.ArgumentParser(description="A GNU Parallel-like tool for Ray cluster.")
+    parser = argparse.ArgumentParser(description="A GNU Parallel-like tool for Ray cluster. Can accept either textfile or piped input for iterables and passes inputs to commands using {} placeholder. (e.g.: seq 10 | rayrun  'python script.py {} arg2 | head -n 5')")
     parser.add_argument('input', help="Input file with commands or arguments.")
-    parser.add_argument('-c', '--command', required=True, help="Command template with '{}' as placeholder for input.")
+    parser.add_argument('-c', '--command', required=True, help="Command template with '{}' as placeholder for input. (e.g. 'python script.py {} arg2 | head -n 10' )")
     parser.add_argument('-t', '--output-code', action='store_true', help="Output the command code that will be executed ({} means input)")
+    parser.add_argument('-m', '--mode', choices=["local", "sagemaker"], default='local', help="Mode in which ray should start cluster. Using 'sagemaker' allows connecting to multiple the instances available for the job by using their IP Configs")
 
     args = parser.parse_args()
 
@@ -136,22 +137,24 @@ def main():
 
     # Output the command code if -t flag is provided
     if args.output_code:
-        print(command_template)
-        sys.exit(0)
+        print(command_template, file=sys.stderr)
+
+    # Initialize Ray (either local or use Sagemaker instance config to connect to all instances)
+    if args.mode == 'local':
+        ray.init()
+    else:
+        ray_helper = RayHelper()
+        ray_helper.start_ray()
 
     tasks = []
-
     for input_item in input_list:
         command = command_template.replace('{}', input_item)
         tasks.append(run_command.remote(command))
 
-    # Wait for all tasks to complete and get results
+    # Wait for all tasks to complete and get results, then shutdown ray
     ray.get(tasks)
+    ray.shutdown()
 
 if __name__ == '__main__':
-    # Initialize Ray
-    # ray.init()
-    ray_helper = RayHelper()
-    ray_helper.start_ray()
+
     main()
-    ray.shutdown()
