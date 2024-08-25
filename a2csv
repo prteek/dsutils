@@ -10,6 +10,8 @@ import os
 import pandas as pd
 
 boto3_session = boto3.Session(region_name="eu-west-1")
+wr.engine.set("python")
+wr.memory_format.set("pandas")
 
 def conditional_cache_query(QUERY, reuse):
     data_dir = "/tmp"

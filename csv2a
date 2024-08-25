@@ -7,7 +7,8 @@ import boto3
 import argparse
 
 boto3_session = boto3.Session(region_name="eu-west-1")
-
+wr.engine.set("python")
+wr.memory_format.set("pandas")
 def main(df, path, database, table, mode, partition_cols, dtype, delimiter):
     return wr.s3.to_csv(df,
                         path=path,
