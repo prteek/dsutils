@@ -136,8 +136,7 @@ def parse_input_file(input_file: str) -> List[str]:
 
 def main():
     parser = argparse.ArgumentParser(description="A GNU Parallel-like tool for Ray cluster. Can accept either textfile or piped input for iterables and passes inputs to commands using {} placeholder. (e.g.: seq 10 | rayrun  'python script.py {} arg2 | head -n 5')")
-    parser.add_argument('-I', default='{}', help="Execute command for each input line, replacing one or more occurrences of symbol defined here")
-    parser.add_argument('command', help="Command template with '{}' (or defined using -I) as placeholder for input. (e.g. 'python script.py {} arg2 | head -n 10' )")
+    parser.add_argument('command', help="Command template with '{}' as placeholder for input. (e.g. 'python script.py {} arg2 | head -n 10' )")
     parser.add_argument('-t', '--output-code', action='store_true', help="Output the command code that will be executed.")
     parser.add_argument('--results', default=None, help="Directory to save the output and error files for each command.")
     parser.add_argument('-m', '--mode', choices=["local", "sagemaker"], default='local', help="Mode in which ray should start cluster. Using 'sagemaker' allows connecting to multiple the instances available for the job by using their IP Configs")
@@ -160,7 +159,7 @@ def main():
 
     tasks = []
     for input_item in input_list:
-        command = command_template.replace(args.I, input_item)
+        command = command_template.replace('{}', input_item).replace('{/}', os.path.basename(input_item))
 
         if args.results:
             if not os.path.exists(args.results): os.mkdir(args.results)
