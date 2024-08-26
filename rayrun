@@ -121,7 +121,7 @@ def run_command(command:str, output_dir):
     else:
         try:
             result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            print(result.stdout.decode('utf-8'))
+            print(result.stdout.decode('utf-8'), file=sys.stdout)
             return result.returncode
         except subprocess.CalledProcessError as e:
             print(e.stderr.decode('utf-8'), file=sys.stderr)
@@ -153,7 +153,7 @@ def main():
 
     # Initialize Ray (either local or use Sagemaker instance config to connect to all instances)
     if args.mode == 'local':
-        ray.init(log_to_driver=True)
+        ray.init()
     else:
         ray_helper = RayHelper()
         ray_helper.start_ray()
