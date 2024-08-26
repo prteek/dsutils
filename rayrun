@@ -135,7 +135,7 @@ def parse_input_file(input_file: str) -> List[str]:
         return [line.strip() for line in file.readlines()]
 
 def main():
-    parser = argparse.ArgumentParser(description="A GNU Parallel-like tool for Ray cluster. Can accept either textfile or piped input for iterables and passes inputs to commands using {} placeholder. (e.g.: seq 10 | rayrun  'python script.py {} arg2 | head -n 5')")
+    parser = argparse.ArgumentParser(description="A GNU Parallel-like tool for Ray cluster. Can accept either textfile or piped input for iterables and passes inputs to commands using {} placeholder or {/} as basefile. (e.g.: seq 10 | rayrun  'python script.py {} arg2 | head -n 5')")
     parser.add_argument('command', help="Command template with '{}' as placeholder for input. (e.g. 'python script.py {} arg2 | head -n 10' )")
     parser.add_argument('-t', '--output-code', action='store_true', help="Output the command code that will be executed.")
     parser.add_argument('--results', default=None, help="Directory to save the output and error files for each command.")
