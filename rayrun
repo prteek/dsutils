@@ -9,6 +9,10 @@ import time
 import socket
 import json
 import os
+import logging
+
+os.environ["RAY_DEDUP_LOGS"] = "0"
+logging.getLogger('ray').setLevel(logging.INFO)
 
 class RayHelper:
     def __init__(self, ray_port: str = "9339", redis_pass: str = "redis_password"):
@@ -116,7 +120,8 @@ def run_command(command:str, output_dir):
             # Write the error message to the error file and print to stderr
             with open(error_file, 'w') as err_f:
                 err_f.write(e.stderr.decode('utf-8'))
-            print(e.stderr.decode('utf-8'), file=sys.stderr)
+            error_message = e.stderr.decode('utf-8') if e.stderr else 'Unknown error'
+            print(error_message, file=sys.stderr)
             return e.returncode
     else:
         try:
@@ -124,7 +129,8 @@ def run_command(command:str, output_dir):
             print(result.stdout.decode('utf-8'), file=sys.stdout)
             return result.returncode
         except subprocess.CalledProcessError as e:
-            print(e.stderr.decode('utf-8'), file=sys.stderr)
+            error_message = e.stderr.decode('utf-8') if e.stderr else 'Unknown error'
+            print(error_message, file=sys.stderr)
             return e.returncode
 
 def parse_input_file(input_file: str) -> List[str]:
@@ -152,7 +158,7 @@ def main():
 
     # Initialize Ray (either local or use Sagemaker instance config to connect to all instances)
     if args.mode == 'local':
-        ray.init()
+        ray.init(logging_level=logging.INFO)
     else:
         ray_helper = RayHelper()
         ray_helper.start_ray()
@@ -172,7 +178,7 @@ def main():
 
     # Wait for all tasks to complete and get results, then shutdown ray
     ray.get(tasks)
-    ray.shutdown()
+    ray.shutdown(_exiting_interpreter=True)
 
 if __name__ == '__main__':
 
