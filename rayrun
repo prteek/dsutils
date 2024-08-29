@@ -14,96 +14,6 @@ import logging
 os.environ["RAY_DEDUP_LOGS"] = "0"
 logging.getLogger('ray').setLevel(logging.INFO)
 
-class RayHelper:
-    def __init__(self, ray_port: str = "9339", redis_pass: str = "redis_password"):
-        self.ray_port = ray_port
-        self.redis_pass = redis_pass
-        self.resource_config = self.get_resource_config()
-        self.master_host = self.resource_config["hosts"][0]
-        self.n_hosts = len(self.resource_config["hosts"])
-
-    @staticmethod
-    def get_resource_config():
-        resource_config_path = "/opt/ml/config/resourceconfig.json"
-        with open(resource_config_path, "r") as f:
-            return json.load(f)
-
-    def _get_ip_from_host(self):
-        ip_wait_time = 200
-        counter = 0
-        ip = ""
-
-        while counter < ip_wait_time and ip == "":
-            try:
-                ip = socket.gethostbyname(self.master_host)
-                break
-            except TypeError:
-                counter += 1
-                time.sleep(1)
-
-        if counter == ip_wait_time and ip == "":
-            raise Exception(
-                "Exceeded max wait time of {}s for hostname resolution".format(
-                    ip_wait_time
-                )
-            )
-        return ip
-
-    def start_ray(self):
-        master_ip = self._get_ip_from_host()
-
-        if self.resource_config["current_host"] == self.master_host:
-            if ray.is_initialized():
-                print("There is a Ray cluster already running. Shutting it down.")
-                ray.shutdown()
-                time.sleep(5)
-            output = subprocess.run(
-                [
-                    "ray",
-                    "start",
-                    "--head",
-                    "-vvv",
-                    "--port",
-                    self.ray_port,
-                    "--redis-password",
-                    self.redis_pass,
-                    "--include-dashboard",
-                    "false",
-                ],
-                stdout=subprocess.PIPE,
-            )
-            print(output.stdout.decode("utf-8"))
-            ray.init(address="auto", include_dashboard=False)
-            self._wait_for_workers()
-            print("All workers present and accounted for")
-            print(ray.cluster_resources())
-
-        else:
-            time.sleep(10)
-            output = subprocess.run(
-                [
-                    "ray",
-                    "start",
-                    f"--address={master_ip}:{self.ray_port}",
-                    "--redis-password",
-                    self.redis_pass,
-                    "--block",
-                ],
-                stdout=subprocess.PIPE,
-            )
-            print(output.stdout.decode("utf-8"))
-            sys.exit(0)
-
-    def _wait_for_workers(self, timeout=60):
-        print(f"Waiting {timeout} seconds for {self.n_hosts} nodes to join")
-
-        while len(ray.nodes()) < self.n_hosts:
-            print(f"{len(ray.nodes())} nodes connected to cluster")
-            time.sleep(5)
-            timeout -= 5
-            if timeout == 0:
-                raise Exception("Max timeout for nodes to join exceeded")
-
 @ray.remote
 def run_command(command:str, output_dir):
     """
@@ -145,7 +55,6 @@ def main():
     parser.add_argument('command', help="Command template with '{}' as placeholder for input. (e.g. 'python script.py {} arg2 | head -n 10' )")
     parser.add_argument('-t', '--output-code', action='store_true', help="Output the command code that will be executed.")
     parser.add_argument('--results', default=None, help="Directory to save the output and error files for each command.")
-    parser.add_argument('-m', '--mode', choices=["local", "sagemaker"], default='local', help="Mode in which ray should start cluster. Using 'sagemaker' allows connecting to multiple the instances available for the job by using their IP Configs")
 
     args = parser.parse_args()
 
@@ -156,12 +65,8 @@ def main():
     if args.output_code:
         print(command_template, file=sys.stderr)
 
-    # Initialize Ray (either local or use Sagemaker instance config to connect to all instances)
-    if args.mode == 'local':
-        ray.init(logging_level=logging.INFO)
-    else:
-        ray_helper = RayHelper()
-        ray_helper.start_ray()
+    # Initialize Ray
+    ray.init(logging_level=logging.INFO)
 
     tasks = []
     for input_item in input_list:
