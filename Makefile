@@ -9,7 +9,7 @@ csvkit:
 	pip install csvkit
 
 pyrun_dep:
-	pip install numpy scipy pandas matplotlib plotnine statsmodels
+	pip install numpy scipy pandas matplotlib plotnine statsmodels ray
 
 aws_dep:
 	pip install boto3 awswrangler
