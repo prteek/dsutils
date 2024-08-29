@@ -37,7 +37,7 @@ make -f Makefile rush
 export PATH="$PATH:/usr/local/bin/"
 ```
 
-2. **rayrun**: A GNU parallel like utility that parallelizes runs using Ray clusters. Useful when running parallel loops on Sagemaker and local. Needs *ray* installed.
+2. **rayrun**: A GNU parallel like utility that parallelizes runs using Ray clusters. This is a faster alternative to GNU parallel. Needs *ray* installed.
 ```shell
 pip install ray
 ```
