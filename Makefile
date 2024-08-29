@@ -1,6 +1,6 @@
 .ONESHELL:
 
-.PHONY: all pydep rush
+.PHONY: all pyrun_dep aws_dep geo_tools_dep rush
 
 all: pyrun_dep aws_dep geo_tools_dep csvkit
 
