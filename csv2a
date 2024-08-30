@@ -38,6 +38,7 @@ if __name__ == '__main__':
                             help='Dictionary of columns names and Athena/Glue types to be casted (e.g. --dtype col1 bigint col2 date)')
     parser.add_argument('--delimiter', '-d',  type=str, default=',',
                             help="Delimiter for piped in file (Must be single character string (Athena compatibility) so '\t' is not allowed)")
+    parser.add_argument('--low-memory-false', action='store_false', help='low memory option (default: True) to pass to pd.read_csv')
 
     args = parser.parse_args()
     if args.data is None:
@@ -49,6 +50,6 @@ if __name__ == '__main__':
         args.dtype = dict(zip(it, it))
 
     #%%
-    df = pd.read_csv(args.data, sep=args.delimiter)
+    df = pd.read_csv(args.data, sep=args.delimiter, low_memory=args.low_memory_false)
     res = main(df, args.output_path, args.database, args.table, args.mode, args.partition_cols, args.dtype, args.delimiter)
     print(res, file=sys.stdout)
