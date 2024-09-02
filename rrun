@@ -1,0 +1,79 @@
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+
+# Function to print help information
+print_help <- function() {
+  cat("Usage: Rscript script.R [options] \"operation\"\n",
+      "Options:\n",
+      "-t, --output-code     Output the script code that will be executed\n",
+      "-l, --libraries       List of additional libraries to load, format: lib1,lib2,...\n",
+      "-d, --delimiter       Delimiter for the file piped in (default ',')\n",
+      "-h, --help            Show this help message and exit\n")
+}
+
+# Parse arguments manually
+operation <- NULL
+output_code <- FALSE
+libraries <- character()
+delimiter <- ","
+
+i <- 1
+while (i <= length(args)) {
+  arg <- args[[i]]
+  if (arg %in% c("-t", "--output-code")) {
+    output_code <- TRUE
+  } else if (arg %in% c("-l", "--libraries")) {
+    i <- i + 1
+    libraries <- unlist(strsplit(args[[i]], ","))
+  } else if (arg %in% c("-d", "--delimiter")) {
+    i <- i + 1
+    delimiter <- args[[i]]
+  } else if (arg %in% c("-h", "--help")) {
+    print_help()
+    quit("no")
+  } else {
+    operation <- arg
+  }
+  i <- i + 1
+}
+
+# Load necessary libraries
+suppressPackageStartupMessages(library(tidyverse))
+library(ggplot2) # Default necessary for plotting
+for (lib in libraries) {
+  library(lib, character.only = TRUE)
+}
+
+if (!isatty(stdin())) {
+  # Read CSV data from stdin into a dataframe
+  df <- read.csv(file("stdin"), sep = ",")
+}
+
+# If output code flag is on, just print the setup
+if (output_code) {
+  cat("#!/usr/bin/env Rscript\n",
+      "library(ggplot2)\n",
+      sapply(libraries, function(lib) sprintf("library(%s)\n", lib), USE.NAMES = FALSE),
+      sprintf("df <- read.csv(file(\"/dev/stdin\"), sep = \"%s\")\n", delimiter),
+      sprintf("print(%s)\n", operation))
+  quit("no")
+}
+
+# Evaluate the operation
+result <- eval(parse(text = operation))
+
+# Output result based on its type
+if (is.data.frame(result)) {
+    con <- file("/dev/stdout", "wb", raw = TRUE)
+    readr::write_delim(result, con, delim = delimiter)
+} else if (is.ggplot(result)) {
+    output_filename <- tempfile(fileext='.png')
+    on.exit(unlink(output_filename))
+    ggsave(output_filename, plot = result);
+    contents <- readBin(output_filename, raw(), n = 1e8)
+    writeBin(contents, file("/dev/stdout", "wb", raw = TRUE))
+
+} else {
+  print(result)
+}
