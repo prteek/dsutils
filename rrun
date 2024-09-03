@@ -43,9 +43,9 @@ while (i <= length(args)) {
 }
 
 # Defaults necessary for analysis
+suppressPackageStartupMessages(library(GGally))
 suppressPackageStartupMessages(library(tidyverse))
 library(ggplot2)
-library(GGally)
 for (lib in libraries) {
   library(lib, character.only = TRUE)
 }
