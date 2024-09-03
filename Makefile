@@ -1,6 +1,6 @@
 .ONESHELL:
 
-.PHONY: all pyrun_dep aws_dep geo_tools_dep rush
+.PHONY: all pyrun_dep aws_dep geo_tools_dep rrun_dep
 
 all: pyrun_dep aws_dep geo_tools_dep csvkit
 
@@ -17,8 +17,5 @@ aws_dep:
 geo_tools_dep:
 	pip install geopandas
 
-
-# Install rush (R one liner commandline utility) using rip from dsutils
-rush:
-	rip --github -p "jeroenjanssens/rush" && \
-	cp $$(Rscript -e 'cat(.libPaths()[1])' | tr -d '"')/rush/exec/rush /usr/local/bin/rush
+rrun_dep:
+	rip install -p ggplot2 tidyverse GGally

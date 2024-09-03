@@ -31,10 +31,9 @@ RUN make -f /opt/program/dsutils/Makefile
 ```
 
 ### Optionals
-1. **Rush**: A one line utility for R (prerequisite R is installed). To use it add *rush* executable to path (preferably in .zshrc or .bashrc)
+1. **rrun**: A one line utility for R (prerequisite R is installed) and packages needed for rrun can be installed as below
 ```shell
-make -f Makefile rush
-export PATH="$PATH:/usr/local/bin/"
+make -f Makefile rrun_dep
 ```
 
 2. **rayrun**: A GNU parallel like utility that parallelizes runs using Ray clusters. This is a faster alternative to GNU parallel. Needs *ray* installed.

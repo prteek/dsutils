@@ -4,7 +4,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Function to print help information
 print_help <- function() {
-  cat("Usage: Rscript script.R [options] \"operation\"\n",
+  cat("Usage: cat file.csv | rrun [options] \"operation\"\n",
       "Options:\n",
       "-t, --output-code     Output the script code that will be executed\n",
       "-l, --libraries       List of additional libraries to load, format: lib1,lib2,...\n",
