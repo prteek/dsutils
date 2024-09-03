@@ -9,7 +9,11 @@ print_help <- function() {
       "-t, --output-code     Output the script code that will be executed\n",
       "-l, --libraries       List of additional libraries to load, format: lib1,lib2,...\n",
       "-d, --delimiter       Delimiter for the file piped in (default ',')\n",
-      "-h, --help            Show this help message and exit\n")
+      "-h, --help            Show this help message and exit\n",
+      "\n",
+      "Supports tidyverse, ggplot and GGally packages by default"
+      )
+
 }
 
 # Parse arguments manually
