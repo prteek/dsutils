@@ -38,9 +38,10 @@ while (i <= length(args)) {
   i <- i + 1
 }
 
-# Load necessary libraries
+# Defaults necessary for analysis
 suppressPackageStartupMessages(library(tidyverse))
-library(ggplot2) # Default necessary for plotting
+library(ggplot2)
+library(GGally)
 for (lib in libraries) {
   library(lib, character.only = TRUE)
 }
@@ -67,7 +68,7 @@ result <- eval(parse(text = operation))
 if (is.data.frame(result)) {
     con <- file("/dev/stdout", "wb", raw = TRUE)
     readr::write_delim(result, con, delim = delimiter)
-} else if (is.ggplot(result)) {
+} else if ((is.ggplot(result)) | inherits(result,'ggmatrix')) {
     output_filename <- tempfile(fileext='.png')
     on.exit(unlink(output_filename))
     ggsave(output_filename, plot = result);
